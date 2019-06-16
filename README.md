@@ -1,6 +1,10 @@
 # Python Music
 
-TBD
+Controls
+* [mpv](https://mpv.io/) - using socket
+* [Spotify](https://www.spotify.com) - using dbus
+
+Yes I know alternative JSON IPC MPV communication is availble. I wanted to just get the methodology I had working with bash scripts translated over to python.
 
 ## Getting Started
 
@@ -36,4 +40,4 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 
 ## Acknowledgments
 
-* TBD
+* [claymcleod gist][https://gist.github.com/claymcleod/b670285f334acd56ad1c] 
