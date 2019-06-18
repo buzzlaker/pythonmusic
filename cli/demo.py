@@ -66,40 +66,19 @@ def start_screen(stdscr):
     draw_screen()
 
 
-def draw_center_content(key_pressed, title="Python Music", subtitle="Written by John Petrilli"):
+def draw_center_content(key_pressed):
     global gstdscr
     global width
     global height
 
-    title = title[:width - 1]
-    subtitle = subtitle[:width - 1]
-    keystr = "Last key pressed: {}".format(key_pressed)[:width - 1]
-    if key_pressed == 0:
-        keystr = "No key press detected..." [:width - 1]
-
-    # Centering calculations
-    start_x_title = int((width // 2) - (len(title) // 2) - len(title) % 2)
-    start_x_subtitle = int((width // 2) - (len(subtitle) // 2) - len(subtitle) % 2)
-    start_x_keystr = int((width // 2) - (len(keystr) // 2) - len(keystr) % 2)
-    start_y = int((height // 2) - 2)
-    # Rendering title
-    gstdscr.addstr(start_y, start_x_title, title)
-
-    # Turning off attributes for title
-    gstdscr.attroff(curses.color_pair(2))
-    gstdscr.attroff(curses.A_BOLD)
-
-    # Print rest of text
-    gstdscr.addstr(height - 2, 0, subtitle)
-    gstdscr.addstr(start_y + 3, (width // 2) - 2, "Lyrics will go here")
-    gstdscr.addstr(start_y + 5, start_x_keystr, keystr)
+    gstdscr.addstr(height - 3, 0, "Lyrics will go here")
 
 
 def ask_user(msg):
     curses.echo()
-    stdscr = curses.initscr()
-    stdscr.clear()
-    choice = my_raw_input(stdscr, 2, 3, msg).decode("utf-8")
+    nstdscr = curses.initscr()
+    nstdscr.clear()
+    choice = my_raw_input(nstdscr, 2, 3, msg).decode("utf-8")
     gstdscr.clear()
     return choice.strip()
 
@@ -109,7 +88,7 @@ def get_paused():
     # TODO I cant get json to read this. I did simple paused[0].decode('utf-8')
     # json.loads wont work. Silly because this should work, something going on.
     # this paused needs to be corrected. hacked together for now
-    # statusbarstr += f"{paused[0]}"
+    # statusbar += f"{paused[0]}"
     paused = str(paused[0].strip()).strip("'<>() ").replace('\'', '\"').replace('b"', '')
     if paused == '{"data":false,"error":"success"}':
         return False
@@ -141,36 +120,37 @@ def draw_screen():
     # TODO clean up this menu its a disaster
     user_commands = {
         "1) Launch MPV": ["set_property", "pause", False],
-        "2) Play/Pause": ["set_property", "pause", False],
-        "3) Pause": ["set_property", "pause", True],
-        "4) Play File": ["loadfile"],
-        "5) Load List": ["loadlist"],
-        "n) Next": ["playlist-next", "weak"],
-        "p) Prev": ["playlist-prev", "weak"],
-        "s) Shuffle Playlist": ["quit"],
-        "c) Launch Cava": ["quit"],
-        "q) Quit": ["quit"],
     }
-    stdscr = curses.initscr()
-    statusbarstr = ""
     playing = ""
     # Initialization
-    gstdscr.clear()
-    height, width = gstdscr.getmaxyx()
     while key_pressed != ord("q"):
+        stdscr = curses.initscr()
+        gstdscr.clear()
+        height, width = gstdscr.getmaxyx()
+        gstdscr.clear()
         if key_pressed == ord("1") and not mpv_launched:
+            user_commands = {
+                "2) Play/Pause": ["set_property", "pause", False],
+                "3) Pause": ["set_property", "pause", True],
+                "4) Play File": ["loadfile"],
+                "5) Load List": ["loadlist"],
+                "n) Next": ["playlist-next", "weak"],
+                "p) Prev": ["playlist-prev", "weak"],
+                "s) Shuffle Playlist": ["quit"],
+                "c) Launch Cava": ["quit"],
+                "q) Quit": ["quit"],
+            }
             mpv.start_mpv()
             mpv_launched = True
-            pass
 
-
+        statusbar = " "
+        media_title = None
         if mpv_launched:
-            statusbarstr = "[MPV Started]"
+            statusbar = "MPV Started"
             paused = mpv.execute_cmd(['get_property', 'pause'])
             # TODO I cant get json to read this. I did simple paused[0].decode('utf-8')
             # json.loads wont work. Silly because this should work, something going on.
             # this paused needs to be corrected. hacked together for now
-            # statusbarstr += f"{paused[0]}"
             if key_pressed == ord("1"):
                 pass
             if key_pressed in [ord("3"), ord("2")]:
@@ -178,26 +158,49 @@ def draw_screen():
                     mpv.execute_cmd(["set_property", "pause", False])
                 else:
                     mpv.execute_cmd(["set_property", "pause", True])
+
             paused = get_paused()
             if paused:
-                statusbarstr += "[Paused]"
+                statusbar += " - Paused"
+            else:
+                statusbar += " - Playing"
 
             if key_pressed == ord("4"):
                 # TODO error checking
                 choice = ask_user("Enter File or Youtube URL")
                 if choice:
                     mpv.execute_cmd(['loadfile', choice, 'append-play'])
+
             if key_pressed == ord("5"):
                 # TODO error checking
                 choice = ask_user("Enter File")
                 if choice:
                     mpv.execute_cmd(['loadlist', choice])
+
             if key_pressed == ord("n"):
+                # TODO show response
                 mpv.execute_cmd(["playlist-next", "weak"])
             if key_pressed == ord("p"):
+                # TODO show response
                 mpv.execute_cmd(["playlist-prev", "weak"])
             if key_pressed == ord("s"):
+                # TODO show response
                 mpv.execute_cmd(["playlist-shuffle"])
+
+            # TODO hacked up example
+            # TODO Handle media_title properly.
+            media_title = mpv.execute_cmd(['get_property', 'media-title'])
+            media_title = str(media_title[0].decode("utf-8")).strip("'<>() ").replace('\'', '\"').replace('b"', '').replace('","error":"success"}', '')
+            # media_title = str(media_title[0].strip())
+            media_title = media_title.replace('{"data":"', '')
+
+            # TODO Handle statusbar properly.
+            gstdscr.addstr(height - 1, 0, statusbar)
+            try:
+                gstdscr.addstr(height - 2, 0, media_title)
+            except:
+                pass
+
 
         # Rendering some text
         # whstr = "Width: {}, Height: {}".format(width, height)
@@ -205,26 +208,12 @@ def draw_screen():
         for idx, i in enumerate(user_commands):
             gstdscr.addstr(idx, 0, i)
 
-        # Render status bar
-        gstdscr.attron(curses.color_pair(3))
-        gstdscr.addstr(height - 1, 0, statusbarstr)
-        gstdscr.addstr(height - 1, len(statusbarstr), " " * (width - len(statusbarstr) - 1))
-        gstdscr.attroff(curses.color_pair(3))
-
         # Turning on attributes for title
-        gstdscr.attron(curses.color_pair(2))
-        gstdscr.attron(curses.A_BOLD)
 
         # Center window content
         # TODO fix same json.loads issue
-        media_title = mpv.execute_cmd(['get_property', 'media-title'])
-        media_title = str(media_title[0].strip()).strip("'<>() ").replace('\'', '\"').replace('b"', '').replace('","error":"success"}', '')
-        media_title = media_title.replace('{"data":"', '')
 
-        if media_title:
-            draw_center_content(key_pressed, subtitle=media_title)
-        else:
-            draw_center_content(key_pressed)
+        draw_center_content(key_pressed)
 
         # Refresh the screen
         gstdscr.refresh()
@@ -232,7 +221,7 @@ def draw_screen():
         # Wait for next input
         key_pressed = gstdscr.getch()
     mpv.execute_cmd(['quit'])
-    # print(mpv.execute_cmd(user_commands['Play File'].append("https://www.youtube.com/watch?v=tsp7IOr7Q9A")))
+
 
 def main():
     curses.wrapper(start_screen)
