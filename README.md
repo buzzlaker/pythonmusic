@@ -1,10 +1,9 @@
 # Python Music
 
 Controls
-* [mpv](https://mpv.io/) - using socket
+* [mpv](https://mpv.io/) - using socket. Yes I know alternative JSON IPC MPV communication is available. I wanted to just get the methodology I had working with bash scripts translated over to python.
 * [Spotify](https://www.spotify.com) - using dbus
 
-Yes I know alternative JSON IPC MPV communication is availble. I wanted to just get the methodology I had working with bash scripts translated over to python.
 
 ## Getting Started
 

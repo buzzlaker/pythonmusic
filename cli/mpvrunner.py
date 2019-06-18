@@ -71,7 +71,9 @@ class MPVRunner:
         p2 = Popen(["socat", "-", "/tmp/mpvsocket"],
                    stdin=p1.stdout,
                    stdout=PIPE)
-        return json.loads(p2.communicate()[0])
+
+        return p2.communicate()
+        # return json.loads(p2.communicate()[0])
 
     def build_message(self, command):
         if type(command) != list:
@@ -79,6 +81,6 @@ class MPVRunner:
         msg = {"command": command}
         return msg
 
-    def x_bm(self, x, c):
-        a = self.build_message(c)
+    def execute_cmd(self, cmd):
+        a = self.build_message(cmd)
         return self.run_command(a)
