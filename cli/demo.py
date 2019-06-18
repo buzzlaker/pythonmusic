@@ -90,7 +90,7 @@ def draw_center_content(key_pressed, title="Python Music", subtitle="Written by 
     gstdscr.attroff(curses.A_BOLD)
 
     # Print rest of text
-    gstdscr.addstr(start_y + 1, start_x_subtitle, subtitle)
+    gstdscr.addstr(height - 2, 0, subtitle)
     gstdscr.addstr(start_y + 3, (width // 2) - 2, "Lyrics will go here")
     gstdscr.addstr(start_y + 5, start_x_keystr, keystr)
 
@@ -145,30 +145,24 @@ def draw_screen():
         "3) Pause": ["set_property", "pause", True],
         "4) Play File": ["loadfile"],
         "5) Load List": ["loadlist"],
-        "6) Next": ["playlist-next", "weak"],
-        "7) Prev": ["playlist-prev", "weak"],
+        "n) Next": ["playlist-next", "weak"],
+        "p) Prev": ["playlist-prev", "weak"],
+        "s) Shuffle Playlist": ["quit"],
         "c) Launch Cava": ["quit"],
         "q) Quit": ["quit"],
     }
     stdscr = curses.initscr()
     statusbarstr = ""
     playing = ""
+    # Initialization
+    gstdscr.clear()
+    height, width = gstdscr.getmaxyx()
     while key_pressed != ord("q"):
         if key_pressed == ord("1") and not mpv_launched:
             mpv.start_mpv()
             mpv_launched = True
             pass
 
-        # Initialization
-        gstdscr.clear()
-        height, width = gstdscr.getmaxyx()
-
-        # Declaration of strings
-        # msg = []
-        # for idx, i in enumerate(user_commands):
-        #     statusbarstr += str(idx + 1) + ") " + i + " "
-        # if not mpv_launched:
-        #     statusbarstr = f"Options 1 launch MPV {statusbarstr}"
 
         if mpv_launched:
             statusbarstr = "[MPV Started]"
@@ -192,27 +186,24 @@ def draw_screen():
                 # TODO error checking
                 choice = ask_user("Enter File or Youtube URL")
                 if choice:
-                    playing = "(" + choice + ")"
                     mpv.execute_cmd(['loadfile', choice, 'append-play'])
             if key_pressed == ord("5"):
                 # TODO error checking
                 choice = ask_user("Enter File")
                 if choice:
-                    playing = "(" + choice + ")"
                     mpv.execute_cmd(['loadlist', choice])
-                playing = "(" + choice + ")"
-            if key_pressed == ord("6"):
+            if key_pressed == ord("n"):
                 mpv.execute_cmd(["playlist-next", "weak"])
-            if key_pressed == ord("7"):
+            if key_pressed == ord("p"):
                 mpv.execute_cmd(["playlist-prev", "weak"])
-            if playing:
-                statusbarstr += playing
+            if key_pressed == ord("s"):
+                mpv.execute_cmd(["playlist-shuffle"])
 
         # Rendering some text
-        whstr = "Width: {}, Height: {}".format(width, height)
-        gstdscr.addstr(0, 0, whstr, curses.color_pair(1))
+        # whstr = "Width: {}, Height: {}".format(width, height)
+        # gstdscr.addstr(0, 0, whstr, curses.color_pair(1))
         for idx, i in enumerate(user_commands):
-            gstdscr.addstr(int(int(idx) + 1), 0, i)
+            gstdscr.addstr(idx, 0, i)
 
         # Render status bar
         gstdscr.attron(curses.color_pair(3))
@@ -225,8 +216,13 @@ def draw_screen():
         gstdscr.attron(curses.A_BOLD)
 
         # Center window content
-        if playing:
-            draw_center_content(key_pressed, subtitle=playing)
+        # TODO fix same json.loads issue
+        media_title = mpv.execute_cmd(['get_property', 'media-title'])
+        media_title = str(media_title[0].strip()).strip("'<>() ").replace('\'', '\"').replace('b"', '').replace('","error":"success"}', '')
+        media_title = media_title.replace('{"data":"', '')
+
+        if media_title:
+            draw_center_content(key_pressed, subtitle=media_title)
         else:
             draw_center_content(key_pressed)
 
