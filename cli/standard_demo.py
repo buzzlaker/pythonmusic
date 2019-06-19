@@ -35,10 +35,15 @@ import json
 import argparse
 import logging
 from subprocess import Popen, PIPE
+from time import sleep
+import requests
+from bs4 import BeautifulSoup
+import re
 
 
 
 def main(args, loglevel):
+    song_cleanup = re.compile('[\[|\(].*[\]\)]')
     logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
     if args.spotify:
         # TODO port bash script to python.
@@ -63,7 +68,22 @@ def main(args, loglevel):
         print("mpv --idle --log-file=~/tmp/mpv_log.txt --input-ipc-server=/tmp/mpvsocket")
         print("\n")
         media_title = run_mpv_command(['get_property', 'media-title'])
-        print(json.loads(media_title[0].decode("utf-8")))
+        media_title = json.loads(media_title[0].decode("utf-8"))
+        if 'data' in media_title:
+            print(media_title['data'])
+
+            title = re.sub(song_cleanup, '', media_title['data'])
+            title = [x.strip() for x in title.split("-") if x.strip()]
+
+            if len(title) >= 2:
+                search_url = 'https://genius.com/api/search/multi?per_page=2&q=' + " ".join(title)
+                search_request = requests.get(search_url)
+                lyrics_url = search_request.json()['response']['sections'][0]['hits'][0]['result']['url']
+                lyrics_html = requests.get(lyrics_url)
+                soup = BeautifulSoup(lyrics_html.content, "html.parser")
+                lyrics = soup.find('div', 'lyrics').get_text()
+                print(lyrics)
+                # print(create_search_query(title[0], " ".join(title[1:]))
 
         choice = None
         if chosen == 'q':
@@ -81,6 +101,9 @@ def main(args, loglevel):
         elif chosen == 'n':
             ret = run_mpv_command(["playlist-next", "weak"])
             # TODO do something on success/fail
+
+            # TODO if I fix the TODO above, I can properly do soemthing when the next item has loaded.
+            sleep(5)
         elif chosen == 'p':
             ret = run_mpv_command(["playlist-prev", "weak"])
             # TODO do something on success/fail
@@ -95,8 +118,11 @@ def main(args, loglevel):
         sub_loop(choice)
     sub_loop()
 
-"""
-"""
+
+
+def get_lyrics(url):
+    return lyrics
+
 
 def clear_screen():
     # TODO add multi OS support
