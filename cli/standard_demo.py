@@ -42,6 +42,17 @@ def main(args, loglevel):
     logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
     if args.spotify:
         # TODO port bash script to python.
+        """
+        # It will be something like this:
+        from pydbus import sessionbus
+
+        session_bus = dbus.SessionBus()
+        bus_data = ("org.mpris.MediaPlayer2.spotify", "/org/mpris/MediaPlayer2")
+        spotify_bus = session_bus.get_object(*bus_data)
+        interface = dbus.Interface(spotify_bus, "org.freedesktop.DBus.Properties")
+        metadata = interface.Get("org.mpris.MediaPlayer2.Player", "Metadata")
+
+        """
         print("Including spotify & dbus settings later")
         sys.exit(2)
         return 1
