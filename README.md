@@ -11,7 +11,7 @@ TBD
 
 ### Prerequisites
 
-TBD
+requirements.txt is almost up to date.
 
 ### Installing
 
