@@ -37,6 +37,7 @@ import logging
 from subprocess import Popen, PIPE
 
 
+
 def main(args, loglevel):
     logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
     if args.spotify:
@@ -51,6 +52,8 @@ def main(args, loglevel):
         print("mpv --idle --log-file=~/tmp/mpv_log.txt --input-ipc-server=/tmp/mpvsocket")
         print("\n")
         media_title = run_mpv_command(['get_property', 'media-title'])
+        print(json.loads(media_title[0].decode("utf-8")))
+
         choice = None
         if chosen == 'q':
             sys.exit(0)
@@ -70,6 +73,9 @@ def main(args, loglevel):
         elif chosen == 'p':
             ret = run_mpv_command(["playlist-prev", "weak"])
             # TODO do something on success/fail
+        elif chosen == 's':
+            ret = run_mpv_command(["playlist-shuffle"])
+            # TODO do something on success/fail
         else:
             choice = input("h Help or enter command: ").strip()
             if choice == 'h':
@@ -79,11 +85,6 @@ def main(args, loglevel):
     sub_loop()
 
 """
-            media_title = mpv.execute_cmd(['get_property', 'media-title'])
-mpv.execute_cmd(["playlist-next", "weak"])
-mpv.execute_cmd(["playlist-prev", "weak"])
-mpv.execute_cmd(["playlist-shuffle"])
-/home/johnny/Music/metalica_load.txt
 """
 
 def clear_screen():
