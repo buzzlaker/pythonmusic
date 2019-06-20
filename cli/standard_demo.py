@@ -90,9 +90,10 @@ def main(args, loglevel):
                 lyrics_url = search_request.json()['response']['sections'][0]['hits'][0]['result']['url']
                 lyrics_html = requests.get(lyrics_url)
                 soup = BeautifulSoup(lyrics_html.content, "html.parser")
-                lyrics = soup.find('div', 'lyrics').get_text()
-                print(lyrics_url)
-                print(lyrics)
+                lyrics = soup.find('div', 'lyrics')
+                if lyrics:
+                    print(lyrics_url)
+                    print(lyrics.get_text())
                 # print(create_search_query(title[0], " ".join(title[1:]))
 
         choice = None
@@ -111,8 +112,7 @@ def main(args, loglevel):
         elif chosen == 'n':
             ret = run_mpv_command(["playlist-next", "weak"])
             # TODO do something on success/fail
-
-            # TODO if I fix the TODO above, I can properly do soemthing when the next item has loaded.
+            # TODO if I fix the TODO above, I can properly do something when the next item has loaded.
             sleep(5)
         elif chosen == 'p':
             ret = run_mpv_command(["playlist-prev", "weak"])
@@ -127,11 +127,6 @@ def main(args, loglevel):
                 choice = input("User Choice: ").strip()
         sub_loop(choice)
     sub_loop()
-
-
-
-def get_lyrics(url):
-    return lyrics
 
 
 def clear_screen():
