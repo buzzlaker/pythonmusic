@@ -41,11 +41,17 @@ from bs4 import BeautifulSoup
 import re
 
 
-
 def main(args, loglevel):
     song_cleanup = re.compile('[\[|\(].*[\]\)]')
-    logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
+    # logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
+    if args.filelog:
+        logging.basicConfig(filename='demo.log', filemode='w', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=loglevel)
+    else:
+        logging.basicConfig(format='%(name)s - %(levelname)s - %(message)s', level=loglevel)
+    logging.debug("Hello")
+
     if args.spotify:
+        logging.debug("spotify")
         # TODO port bash script to python.
         """
         # It will be something like this:
@@ -63,18 +69,21 @@ def main(args, loglevel):
         return 1
 
     def sub_loop(chosen=None):
+        logging.debug("running inside sub_loop")
         clear_screen()
         print("Make sure you have started mpv like this:")
         print("mpv --idle --log-file=~/tmp/mpv_log.txt --input-ipc-server=/tmp/mpvsocket")
         print("\n")
-        media_title = run_mpv_command(['get_property', 'media-title'])
-        media_title = json.loads(media_title[0].decode("utf-8"))
+        media_title = run_mpv_command(['get_property', 'media-title'])[0].decode("utf-8")
+        if media_title:
+            media_title = json.loads(media_title)
+            logging.debug("media_title: " + str(media_title))
+            print(media_title)
+            print("---")
         if 'data' in media_title:
-            print(media_title['data'])
 
             title = re.sub(song_cleanup, '', media_title['data'])
             title = [x.strip() for x in title.split("-") if x.strip()]
-
             if len(title) >= 2:
                 search_url = 'https://genius.com/api/search/multi?per_page=2&q=' + " ".join(title)
                 search_request = requests.get(search_url)
@@ -82,6 +91,7 @@ def main(args, loglevel):
                 lyrics_html = requests.get(lyrics_url)
                 soup = BeautifulSoup(lyrics_html.content, "html.parser")
                 lyrics = soup.find('div', 'lyrics').get_text()
+                print(lyrics_url)
                 print(lyrics)
                 # print(create_search_query(title[0], " ".join(title[1:]))
 
@@ -126,6 +136,7 @@ def get_lyrics(url):
 
 def clear_screen():
     # TODO add multi OS support
+    logging.debug("clearing screen")
     return subprocess.call('clear', shell=True)
 
 
@@ -168,8 +179,15 @@ if __name__ == "__main__":
         "-v",
         "--verbose",
         help="increase output verbosity.",
+        dest="verbose",
+        action="store_true")
+    parser.add_argument(
+        "-fl",
+        help="write log to file",
+        dest="filelog",
         action="store_true")
     args = parser.parse_args()
+
 
     # Setup logging
     if args.verbose:
