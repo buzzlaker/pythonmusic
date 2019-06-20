@@ -78,9 +78,9 @@ def main(args, loglevel):
         if media_title:
             media_title = json.loads(media_title)
             logging.debug("media_title: " + str(media_title))
+        if 'data' in media_title:
             print(media_title)
             print("---")
-        if 'data' in media_title:
 
             title = re.sub(song_cleanup, '', media_title['data'])
             title = [x.strip() for x in title.split("-") if x.strip()]
